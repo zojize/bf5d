@@ -2,6 +2,20 @@
 
 A visual interpreter for [5D Brainfuck With Multiverse Time Travel](https://esolangs.org/wiki/5D_Brainfuck_With_Multiverse_Time_Travel). ~~Utilizes multiple threads to speed up computation across different timelines~~.
 
+## Running the Project
+
+```bash
+
+# make sure you have the wasm32-unknown-unknown target installed
+rustup target add wasm32-unknown-unknown 
+
+# you'll also need te trunk build tool
+cargo install trunk wasm-bindgen-cli
+
+# project will be served at localhost
+trunk serve
+```
+
 ## TODOs
 
 - [ ] project details
