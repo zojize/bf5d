@@ -1,6 +1,10 @@
-use std::{cell::Cell, num::Wrapping, vec};
-
 use itertools::Itertools;
+use std::{
+    cell::{Cell, RefCell},
+    num::Wrapping,
+    rc::Rc,
+    vec,
+};
 
 use crate::parser::types::{JumpType, MoveDirection, Token, UpdateType};
 
@@ -9,14 +13,20 @@ type ID = usize;
 // https://stackoverflow.com/a/32936064/14835397
 thread_local!(static ID_GEN: Cell<ID> = Cell::new(0));
 
+enum Pointer {
+    Here(isize),
+    Another(ID, isize),
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Timeline {
     pub id: ID,
     pub data: Vec<Wrapping<u8>>,
     pub data_backwards: Vec<Wrapping<u8>>,
     pub pointers: Vec<isize>,
-    // pub history: Vec<MutationRecord>, // not sure about this
+    pub tape: Vec<Vec<(isize, Wrapping<u8>)>>,
     pub instruction_pointer: usize,
+    pub alive: bool,
 }
 
 pub enum Command {
@@ -24,6 +34,7 @@ pub enum Command {
     MovePointer { id: ID, direction: MoveDirection },
     SpawnAt { id: ID, instruction_start: usize },
     RemoveAt(ID),
+    // MutateAt(Vec<(Pointer, ID)>),
 }
 
 impl Timeline {
@@ -36,7 +47,9 @@ impl Timeline {
                 data: vec![Wrapping(0)],
                 data_backwards: vec![],
                 pointers: vec![0],
+                tape: vec![],
                 instruction_pointer: 0,
+                alive: true,
             }
         })
     }
@@ -45,13 +58,7 @@ impl Timeline {
         ID_GEN.with(|thread_id| {
             let id = thread_id.get();
             thread_id.set(id + 1);
-            Self {
-                id,
-                data: self.data.clone(),
-                data_backwards: self.data_backwards.clone(),
-                pointers: self.pointers.clone(),
-                instruction_pointer: self.instruction_pointer.clone(),
-            }
+            Self { id, ..self.clone() }
         })
     }
 
@@ -67,13 +74,21 @@ impl Timeline {
             match action {
                 Move(dir) => match dir {
                     MoveDirection::Left => {
-                        for ptr in &mut self.pointers {
+                        for i in 0..self.pointers.len() {
+                            let ptr = self.pointers.get_mut(i).unwrap();
                             *ptr -= 1;
+                            // drop mutable borrow
+                            let ptr = *ptr;
+                            self.extend_data(ptr);
                         }
                     }
                     MoveDirection::Right => {
-                        for ptr in &mut self.pointers {
+                        for i in 0..self.pointers.len() {
+                            let ptr = self.pointers.get_mut(i).unwrap();
                             *ptr += 1;
+                            // drop mutable borrow
+                            let ptr = *ptr;
+                            self.extend_data(ptr);
                         }
                     }
                     _ => (),
@@ -81,17 +96,27 @@ impl Timeline {
                 Update(type_) => {
                     match type_ {
                         Increment => {
+                            let mut slice_of_time = vec![];
                             for ptr in self.pointers.clone() {
                                 let data = self.data_at_mut(ptr);
+                                slice_of_time.push((ptr, data.clone()));
                                 *data += Wrapping(1);
+                            }
+                            if context.need_history {
+                                self.tape.push(slice_of_time)
                             }
                             // why is this an error ⬇️
                             // self.pointers.clone().iter().map(|index| self.get_data_at(*index));
                         }
                         Decrement => {
+                            let mut slice_of_time = vec![];
                             for ptr in self.pointers.clone() {
                                 let data = self.data_at_mut(ptr);
+                                slice_of_time.push((ptr, data.clone()));
                                 *data -= Wrapping(1);
+                            }
+                            if context.need_history {
+                                self.tape.push(slice_of_time)
                             }
                         }
                     }
@@ -106,13 +131,29 @@ impl Timeline {
                     );
                 }
                 Read => {
-                    let c = context.program_input.remove(0);
+                    let mut slice_of_time = vec![];
                     for ptr in self.pointers.clone() {
-                        let x = self.data_at_mut(ptr);
-                        *x = Wrapping(c as u8);
+                        let c = if context.program_input.len() == 0 {
+                            '\0'
+                        } else {
+                            context.program_input.remove(0)
+                        };
+                        let data = self.data_at_mut(ptr);
+                        slice_of_time.push((ptr, data.clone()));
+                        *data = Wrapping(c as u8);
+                    }
+                    if context.need_history {
+                        self.tape.push(slice_of_time)
                     }
                 }
-                Rewind => todo!(),
+                Rewind => {
+                    if let Some(slice_of_time) = self.tape.pop() {
+                        for (i, history) in slice_of_time {
+                            let data = self.data_at_mut(i);
+                            *data = history;
+                        }
+                    }
+                }
                 _ => (),
             }
 
@@ -191,7 +232,7 @@ impl Timeline {
         }
     }
 
-    fn data_at_mut(&mut self, index: isize) -> &mut Wrapping<u8> {
+    fn extend_data(&mut self, index: isize) -> (usize, &mut Vec<Wrapping<u8>>) {
         // if index negative
         let data = if index < 0 {
             // use backwards data
@@ -218,6 +259,11 @@ impl Timeline {
             data.extend((len..index + 1).map(|_| Wrapping(0)));
         };
 
+        (index, data)
+    }
+
+    fn data_at_mut(&mut self, index: isize) -> &mut Wrapping<u8> {
+        let (index, data) = self.extend_data(index);
         (*data).get_mut(index).unwrap()
     }
 
@@ -260,6 +306,7 @@ pub struct BF5DContext {
     pub program_output: String,
     pub total_timelines: usize,
     pub metadata: Vec<TimelineMeta>,
+    pub need_history: bool,
 }
 
 impl BF5DContext {
@@ -267,10 +314,11 @@ impl BF5DContext {
         BF5DContext {
             raw_program: "".to_string(),
             tokens: vec![],
-            program_input: "hello".to_string(),
+            program_input: "".to_string(),
             program_output: "".to_string(),
             total_timelines: 0,
             metadata: vec![],
+            need_history: true,
         }
     }
 
@@ -297,6 +345,9 @@ impl BF5DContext {
                         timeline.pointers.clear();
                         let target = timelines.get_mut(index - 1).unwrap();
                         target.pointers.extend(pointers.clone());
+                        for ptr in pointers {
+                            target.extend_data(ptr);
+                        }
                     } else {
                         timeline.pointers.clear();
                     }

@@ -18,6 +18,10 @@ export default defineConfig({
       }),
     ],
     [/^content-\[(.*)\]$/, ([, content]) => ({ content })],
+    [
+      /^translate-y$/,
+      () => ({ transform: 'translateY(var(--un-translate-y))' }),
+    ],
   ],
   variants: [
     (matcher) =>

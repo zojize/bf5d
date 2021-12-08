@@ -3,6 +3,29 @@
   src: url('./public/fonts/CascadiaMono.woff2') format('woff');
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: Inter;
+@import url('/public/fonts/LinLibertine.css');
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Linux Libertine', 'Georgia', 'Times', serif;
+}
+
+/* poly-filling broken unocss rules */
+.pointed::before {
+  content: '';
+  position: absolute;
+  border: 0.30rem solid transparent;
+  border-top: #000 13px solid;
+  transform: translateY(-90%);
+}
+.pointed::after {
+  content: var(--pointers-count);
+  position: absolute;
+  color: #fff;
+  font-size: xx-small;
+  transform: translateY(-1.25rem);
 }

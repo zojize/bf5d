@@ -1,6 +1,6 @@
 use nom::error::{ErrorKind, FromExternalError, ParseError};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum MoveDirection {
     Left,  // '<'
     Right, // '>'
@@ -8,20 +8,20 @@ pub enum MoveDirection {
     Down,  // 'v'
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum UpdateType {
     Increment, // '+'
     Decrement, // '-'
                // potentially more
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum JumpType {
     IfZero,    // '['
     IfNotZero, // ']'
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Token {
     Move(MoveDirection),                    // '<', '>', '^', 'v'
     Update(UpdateType),                     // '+', '-'
@@ -59,7 +59,7 @@ impl<I> ParseError<I> for BF5DParseError {
 
 impl<I, E> FromExternalError<I, E> for BF5DParseError {
     /// Create a new error from an input position and an external error
-    fn from_external_error(input: I, kind: ErrorKind, _e: E) -> Self {
+    fn from_external_error(_: I, _: ErrorKind, _e: E) -> Self {
         BF5DParseError {
             message: "".to_string(),
             location: 0,

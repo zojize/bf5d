@@ -27,5 +27,6 @@ features = [
   'HtmlElement',
   'Node',
   'Window',
+  'Selection',
   "console",
 ]

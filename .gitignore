@@ -2,3 +2,4 @@ target
 Cargo.lock
 dist
 node_modules
+.DS_Store

@@ -129,8 +129,10 @@ pub fn parse<'a>(input: &str) -> Result<Vec<Token>, BF5DParseError> {
                         tokens.push(token);
                     }
                 }
-            };
-            FoldWhile::Continue((tokens, brackets, parens, i + 1))
+                FoldWhile::Continue((tokens, brackets, parens, i + 1))
+            } else {
+                FoldWhile::Continue((tokens, brackets, parens, i))
+            }
         },
     )(input)
     {
