@@ -5,6 +5,7 @@
   "scripts": {
     "test": "cargo test",
     "dev": "trunk serve -w styles",
+    "build": "trunk build --release",
     "unocss:dev": "unocss \"src/**/*.rs\" \"index.html\" --watch --out-file styles/uno.css"
   },
   "keywords": [],
