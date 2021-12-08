@@ -131,16 +131,6 @@ fn view() -> Html {
                                     }
                                 }
                             }}
-                            // <button
-                            //     class="w-6 h-6 cursor-pointer i-mdi-play"
-                            //     title="run"
-                            //     onclick={ on_run }
-                            // />
-                            // <button
-                            //     class="w-6 h-6 cursor-pointer i-mdi-pause"
-                            //     title="pause"
-                            //     onclick={ on_pause }
-                            // />
                             <button
                                 class="w-6 h-6 cursor-pointer i-mdi-step-forward"
                                 title="step"

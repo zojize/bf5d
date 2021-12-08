@@ -17,7 +17,7 @@ pub fn view(props: &ProgramOutputProps) -> Html {
                 w-full h-full p-2
                 overflow-hidden
                 border-2 border-black border-dashed
-                font-cascadia tracking-widest break-normal
+                font-cascadia tracking-widest break-all
                 outline-none
             "
         >
