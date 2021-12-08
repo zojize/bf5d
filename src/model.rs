@@ -28,7 +28,8 @@ impl Default for Model {
         Self {
             // raw_program: "".to_string(),
             context: Rc::new(RefCell::new(BF5DContext {
-                raw_program: LocalStorage::get(RAW_PROGRAM_KEY).unwrap_or("-[>,.<]".to_string()),
+                raw_program: LocalStorage::get(RAW_PROGRAM_KEY)
+                    .unwrap_or("(>^)@-[>,.<]".to_string()),
                 tokens: vec![],
                 program_input: "hello".to_string(),
                 program_output: "".to_string(),
