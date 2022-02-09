@@ -1,6 +1,6 @@
 # 5D Brainfuck With Multiverse Time Travel
 
-A visual interpreter for [5D Brainfuck With Multiverse Time Travel](https://esolangs.org/wiki/5D_Brainfuck_With_Multiverse_Time_Travel). ~~Utilizes multiple threads to speed up computation across different timelines~~.
+A visual interpreter for [5D Brainfuck With Multiverse Time Travel](https://esolangs.org/wiki/5D_Brainfuck_With_Multiverse_Time_Travel).
 
 ## Running the Project
 
